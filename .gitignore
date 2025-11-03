@@ -92,6 +92,9 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/7973-sonarlint
 .idea/**/sonarlint/
 
+.cursor
+.cursorrules
+
 # SonarQube Plugin
 # https://plugins.jetbrains.com/plugin/7238-sonarqube-community-plugin
 .idea/**/sonarIssues.xml
@@ -113,6 +116,7 @@ fabric.properties
 # Azure Toolkit for IntelliJ plugin
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 .idea/**/azureSettings.xml
+.plan.md
 
 ### Intellij+all ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
