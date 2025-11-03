@@ -23,6 +23,7 @@
 - **Стек технологий**:
   - Java 21.
   - Spring Boot 3.5.7.
+    - Spring Web (для REST API).
     - Spring Data JPA (для использования Hibernate).
     - PostgreSQL Driver (для взаимодействия с PostgreSQL).
     - Testcontainers (для тестирования взаимодействия с БД).
