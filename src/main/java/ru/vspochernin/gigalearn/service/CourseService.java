@@ -1,0 +1,110 @@
+package ru.vspochernin.gigalearn.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.vspochernin.gigalearn.entity.Category;
+import ru.vspochernin.gigalearn.entity.Course;
+import ru.vspochernin.gigalearn.entity.User;
+import ru.vspochernin.gigalearn.repository.CategoryRepository;
+import ru.vspochernin.gigalearn.repository.CourseRepository;
+import ru.vspochernin.gigalearn.repository.ModuleRepository;
+import ru.vspochernin.gigalearn.repository.UserRepository;
+
+import java.time.LocalDate;
+
+@Service
+@RequiredArgsConstructor
+public class CourseService {
+
+    private final CourseRepository courseRepository;
+    private final ModuleRepository moduleRepository;
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public Course createCourse(String title, String description, Long categoryId, Long teacherId,
+                               String duration, LocalDate startDate) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
+
+        User teacher = userRepository.findById(teacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found: " + teacherId));
+
+        Course course = Course.builder()
+                .title(title)
+                .description(description)
+                .category(category)
+                .teacher(teacher)
+                .duration(duration)
+                .startDate(startDate)
+                .build();
+
+        return courseRepository.save(course);
+    }
+
+    @Transactional
+    public Course updateCourse(Long id, String title, String description, String duration, LocalDate startDate) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found: " + id));
+
+        if (title != null) {
+            course.setTitle(title);
+        }
+        if (description != null) {
+            course.setDescription(description);
+        }
+        if (duration != null) {
+            course.setDuration(duration);
+        }
+        if (startDate != null) {
+            course.setStartDate(startDate);
+        }
+
+        return courseRepository.save(course);
+    }
+
+    @Transactional
+    public void deleteCourse(Long id) {
+        if (!courseRepository.existsById(id)) {
+            throw new IllegalArgumentException("Course not found: " + id);
+        }
+        courseRepository.deleteById(id);
+    }
+
+    @Transactional
+    public Long addModule(Long courseId, String title, String description, Integer orderIndex) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found: " + courseId));
+
+        ru.vspochernin.gigalearn.entity.Module module = ru.vspochernin.gigalearn.entity.Module.builder()
+                .title(title)
+                .description(description)
+                .orderIndex(orderIndex)
+                .course(course)
+                .build();
+
+        ru.vspochernin.gigalearn.entity.Module savedModule = moduleRepository.save(module);
+        return savedModule.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public Course getCourseWithContent(Long id) {
+        // Используем JOIN FETCH для загрузки курса с модулями и уроками
+        return courseRepository.findById(id)
+                .map(course -> {
+                    // Инициализируем ленивые коллекции внутри транзакции
+                    course.getModules().size();
+                    course.getModules().forEach(module -> module.getLessons().size());
+                    return course;
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Course not found: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public Course getCourseById(Long id) {
+        return courseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found: " + id));
+    }
+}
+
