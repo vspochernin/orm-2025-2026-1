@@ -290,6 +290,7 @@ curl -X POST http://localhost:8080/api/courses/2/modules \
   -H "Content-Type: application/json" \
   -d '{"title":"Модуль 1","orderIndex":1}'
 # Ответ: {"id":3}
+```
 
 ```bash
 # 3. Добавить урок
@@ -349,9 +350,7 @@ curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Ленивая загрузка","isCorrect":true}'
 # Ответ: {"id":7}
-```
 
-```bash
 curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Немедленная загрузка","isCorrect":false}'
