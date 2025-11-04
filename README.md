@@ -98,7 +98,7 @@ curl http://localhost:8080/api/courses/1
 # {
 #   "id": 1,
 #   "title": "Основы Hibernate и JPA",
-#   "categoryName": "Программирование",
+#   ...
 #   "teacherName": "Иван Петров",
 #   "tagNames": ["Java", "ORM"]
 # }
@@ -282,13 +282,16 @@ curl -X POST http://localhost:8080/api/courses \
   -H "Content-Type: application/json" \
   -d '{"title":"Новый курс","categoryId":1,"teacherId":1}'
 # Ответ: {"id":2}
+```
 
+```bash
 # 2. Добавить модуль
 curl -X POST http://localhost:8080/api/courses/2/modules \
   -H "Content-Type: application/json" \
   -d '{"title":"Модуль 1","orderIndex":1}'
 # Ответ: {"id":3}
 
+```bash
 # 3. Добавить урок
 curl -X POST http://localhost:8080/api/modules/3/lessons \
   -H "Content-Type: application/json" \
@@ -304,13 +307,17 @@ curl -X POST http://localhost:8080/api/lessons/1/assignments \
   -H "Content-Type: application/json" \
   -d '{"title":"Задание 1","maxScore":100}'
 # Ответ: {"id":2}
+```
 
+```bash
 # 2. Студент сдает задание
 curl -X POST http://localhost:8080/api/assignments/2/submit \
   -H "Content-Type: application/json" \
   -d '{"studentId":2,"content":"Мое решение"}'
 # Ответ: {"id":1}
+```
 
+```bash
 # 3. Оценить сдачу
 curl -X POST http://localhost:8080/api/submissions/1/grade \
   -H "Content-Type: application/json" \
@@ -326,24 +333,32 @@ curl -X POST http://localhost:8080/api/modules/2/quiz \
   -H "Content-Type: application/json" \
   -d '{"title":"Тест","timeLimitSeconds":1800}'
 # Ответ: {"id":2}
+```
 
+```bash
 # 2. Добавить вопрос
 curl -X POST http://localhost:8080/api/quizzes/2/questions \
   -H "Content-Type: application/json" \
   -d '{"text":"Что такое LAZY?"}'
 # Ответ: {"id":3}
+```
 
+```bash
 # 3. Добавить варианты (правильный и неправильный)
 curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Ленивая загрузка","isCorrect":true}'
 # Ответ: {"id":7}
+```
 
+```bash
 curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Немедленная загрузка","isCorrect":false}'
 # Ответ: {"id":8}
+```
 
+```bash
 # 4. Студент проходит тест (вопрос 1 из демо-данных: правильный вариант = 1)
 curl -X POST http://localhost:8080/api/quizzes/1/take \
   -H "Content-Type: application/json" \
