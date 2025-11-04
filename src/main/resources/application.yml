@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: gigalearn
+
+  jpa:
+    # Отключаем Open Session In View для явного управления транзакциями
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+

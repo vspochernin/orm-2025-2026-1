@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gigalearn_dev
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    # Автообновление схемы в dev-режиме (создание/обновление таблиц)
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Включить загрузку демо-данных в dev-профиле
+  sql:
+    init:
+      mode: never  # Используем CommandLineRunner вместо data.sql
+
+# Логирование для отладки
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    ru.vspochernin.gigalearn: DEBUG
+

@@ -1,0 +1,24 @@
+spring:
+  # URL и credentials для datasource НЕ указываем - будем использовать @DynamicPropertySource в тестах
+
+  jpa:
+    # Пересоздание схемы на каждый тестовый прогон
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Отключить загрузку демо-данных в тестах
+  sql:
+    init:
+      mode: never
+
+# Минимальное логирование в тестах
+logging:
+  level:
+    org.hibernate.SQL: INFO
+    ru.vspochernin.gigalearn: INFO
+
