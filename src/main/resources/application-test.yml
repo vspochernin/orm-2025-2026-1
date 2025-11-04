@@ -2,9 +2,10 @@ spring:
   # URL и credentials для datasource НЕ указываем - будем использовать @DynamicPropertySource в тестах
 
   jpa:
-    # Пересоздание схемы на каждый тестовый прогон
+    # Создание схемы на каждый тестовый прогон
+    # Используем create вместо create-drop чтобы избежать попыток drop при shutdown
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate:
@@ -16,9 +17,20 @@ spring:
     init:
       mode: never
 
+  # Настройки datasource для тестов (переопределяются @DynamicPropertySource)
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 5000
+      validation-timeout: 3000
+      leak-detection-threshold: 60000
+      # Быстрое завершение пула
+      connection-test-query: SELECT 1
+
 # Минимальное логирование в тестах
 logging:
   level:
     org.hibernate.SQL: INFO
     ru.vspochernin.gigalearn: INFO
+    com.zaxxer.hikari: WARN
 

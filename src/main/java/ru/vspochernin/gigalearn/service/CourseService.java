@@ -93,9 +93,16 @@ public class CourseService {
         // Используем JOIN FETCH для загрузки курса с модулями и уроками
         return courseRepository.findById(id)
                 .map(course -> {
-                    // Инициализируем ленивые коллекции внутри транзакции
+                    // Инициализируем ленивые коллекции и связи внутри транзакции
                     course.getModules().size();
                     course.getModules().forEach(module -> module.getLessons().size());
+
+                    // Инициализируем базовые связи для использования в контроллере
+                    course.getCategory().getName();
+                    course.getTeacher().getName();
+                    course.getTags().size();
+                    course.getTags().forEach(tag -> tag.getName());
+
                     return course;
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Course not found: " + id));

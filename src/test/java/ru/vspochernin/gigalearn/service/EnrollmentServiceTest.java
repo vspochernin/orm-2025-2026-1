@@ -116,11 +116,11 @@ class EnrollmentServiceTest {
         Category category = categoryRepository.save(
                 Category.builder().name("Test Category").build()
         );
-        
+
         User teacher = userRepository.save(
                 User.builder().name("Teacher").email("teacher@test.com").role(Role.TEACHER).build()
         );
-        
+
         Course course = courseRepository.save(
                 Course.builder()
                         .title("Test Course")
@@ -148,11 +148,11 @@ class EnrollmentServiceTest {
         Category category = categoryRepository.save(
                 Category.builder().name("Test Category").build()
         );
-        
+
         User teacher = userRepository.save(
                 User.builder().name("Teacher").email("teacher@test.com").role(Role.TEACHER).build()
         );
-        
+
         Course course = courseRepository.save(
                 Course.builder()
                         .title("Test Course")
@@ -191,11 +191,11 @@ class EnrollmentServiceTest {
         Category category = categoryRepository.save(
                 Category.builder().name("Test Category").build()
         );
-        
+
         User teacher = userRepository.save(
                 User.builder().name("Teacher").email("teacher@test.com").role(Role.TEACHER).build()
         );
-        
+
         Course course = courseRepository.save(
                 Course.builder()
                         .title("Test Course")
