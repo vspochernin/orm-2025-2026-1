@@ -145,7 +145,11 @@ class QuizControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("Test Quiz"))
+                .andExpect(jsonPath("$.timeLimit").value(1800))
+                .andExpect(jsonPath("$.moduleId").value(moduleId))
+                .andExpect(jsonPath("$.moduleTitle").value("Module"));
     }
 
     @Test
@@ -167,7 +171,10 @@ class QuizControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.text").value("What is ORM?"))
+                .andExpect(jsonPath("$.quizId").value(quiz.getId()))
+                .andExpect(jsonPath("$.quizTitle").value("Test Quiz"));
     }
 
     @Test
@@ -197,7 +204,11 @@ class QuizControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.text").value("Object-Relational Mapping"))
+                .andExpect(jsonPath("$.isCorrect").value(true))
+                .andExpect(jsonPath("$.questionId").value(question.getId()))
+                .andExpect(jsonPath("$.questionText").value("What is ORM?"));
     }
 
     @Test
@@ -243,7 +254,14 @@ class QuizControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.studentId").value(studentId))
+                .andExpect(jsonPath("$.studentName").value("Student"))
+                .andExpect(jsonPath("$.quizId").value(quiz.getId()))
+                .andExpect(jsonPath("$.quizTitle").value("Test Quiz"))
+                .andExpect(jsonPath("$.score").value(1))
+                .andExpect(jsonPath("$.totalQuestions").value(1))
+                .andExpect(jsonPath("$.takenAt").isNotEmpty());
     }
 
     @Test

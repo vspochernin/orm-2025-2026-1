@@ -57,6 +57,20 @@ docker compose up -d
 - `spring.jpa.hibernate.ddl-auto=update` (только dev профиль) - автообновление схемы.
 - Демо-данные загружаются только в профиле `dev` (с помощью аннотации `@Profile("dev")`).
 
+### Примечание по архитектуре и lazy loading
+
+Согласно заданию, от нас требуется "настроить ORM-связи таким образом, чтобы при работе с ней студенты столкнулись с проблемами ленивой загрузки. Это поможет отработать понимание механизма Lazy Loading и способов его обхода" (см. [task.md](task.md)).
+
+В коде итогового проекта мной **специально** используется подход, демонстрирующий проблему и её решение:
+
+1. **Имеется демонстрация проблемы**: есть отдельный тест `testLazyInitializationException`, который демонстрирует `LazyInitializationException` при попытке доступа к коллекции вне транзакции.
+
+2. **Также имеется "костыльное" решение**: в контроллерах используется `@Transactional` для создания транзакционного контекста, внутри которого можно безопасно обращаться к lazy-полям связанных сущностей при маппинге в Response DTO.
+
+3. **Мы сознательно идем на архитектурный компромисс**: контроллеры напрямую обращаются к репозиториям для извлечения созданных сущностей и построения полных DTO-ответов. Это сделано **специально** для учебных целей - чтобы показать понимание проблемы ленивой загрузки и способов её решения.
+
+В production-коде логика маппинга в DTO была бы вынесена в сервисный слой (методы типа `addModuleAndGetDto()`), но для учебного проекта (учитывая необходимость явной LAZY загрузки в задании) текущий подход более нагляден помогает продемонстрировать данную проблему.
+
 ## Запуск тестов
 
 ```bash
@@ -87,7 +101,16 @@ curl -X POST http://localhost:8080/api/courses \
 }'
 
 # Ответ: 201 Created
-# { "id": 2 }
+# {
+#   "id": 2,
+#   "title": "Основы Java",
+#   "description": "Курс для начинающих",
+#   "duration": null,
+#   "startDate": null,
+#   "categoryName": "Программирование",
+#   "teacherName": "Иван Петров",
+#   "tagNames": ["Java", "ORM"]
+# }
 ```
 
 **Получение курса:**
@@ -109,13 +132,20 @@ curl http://localhost:8080/api/courses/1
 curl -X POST http://localhost:8080/api/courses/1/modules \
   -H "Content-Type: application/json" \
   -d '{
-  "title": "Модуль 1",
-  "description": "Описание",
-  "orderIndex": 1
+  "title": "Модуль 3",
+  "description": "Описание третьего модуля",
+  "orderIndex": 3
 }'
 
 # Ответ: 201 Created
-# { "id": 3 }
+# {
+#   "id": 3,
+#   "title": "Модуль 3",
+#   "description": "Описание третьего модуля",
+#   "orderIndex": 3,
+#   "courseId": 1,
+#   "courseTitle": "Основы Hibernate и JPA"
+# }
 ```
 
 **Добавление урока:**
@@ -129,7 +159,14 @@ curl -X POST http://localhost:8080/api/modules/3/lessons \
 }'
 
 # Ответ: 201 Created
-# { "id": 5 }
+# {
+#   "id": 5,
+#   "title": "Урок 1",
+#   "content": "Контент урока",
+#   "videoUrl": "https://example.com/video",
+#   "moduleId": 3,
+#   "moduleTitle": "Модуль 3"
+# }
 ```
 
 ### Запись на курс
@@ -139,7 +176,15 @@ curl -X POST http://localhost:8080/api/modules/3/lessons \
 curl -X POST "http://localhost:8080/api/courses/1/enroll?userId=2"
 
 # Ответ: 201 Created
-# { "id": 1 }
+# {
+#   "id": 1,
+#   "studentId": 2,
+#   "studentName": "Анна Смирнова",
+#   "courseId": 1,
+#   "courseTitle": "Основы Hibernate и JPA",
+#   "enrollDate": "2025-11-05",
+#   "status": "Active"
+# }
 # При повторной попытке: 409 Conflict
 ```
 
@@ -163,7 +208,14 @@ curl -X POST http://localhost:8080/api/lessons/1/assignments \
 }'
 
 # Ответ: 201 Created
-# { "id": 2 }
+# {
+#   "id": 2,
+#   "title": "Домашнее задание",
+#   "description": "Опишите концепции ORM",
+#   "maxScore": 100,
+#   "lessonId": 1,
+#   "lessonTitle": "Что такое ORM?"
+# }
 ```
 
 **Сдача задания:**
@@ -176,7 +228,17 @@ curl -X POST http://localhost:8080/api/assignments/2/submit \
 }'
 
 # Ответ: 201 Created
-# { "id": 1 }
+# {
+#   "id": 1,
+#   "studentId": 2,
+#   "studentName": "Анна Смирнова",
+#   "assignmentId": 2,
+#   "assignmentTitle": "Домашнее задание",
+#   "content": "Моё решение...",
+#   "submittedAt": "2025-11-05T11:00:00Z",
+#   "score": null,
+#   "feedback": null
+# }
 # При повторной попытке: 409 Conflict
 ```
 
@@ -205,7 +267,13 @@ curl -X POST http://localhost:8080/api/modules/2/quiz \
 }'
 
 # Ответ: 201 Created
-# { "id": 2 }
+# {
+#   "id": 2,
+#   "title": "Тест по модулю",
+#   "timeLimit": 1800,
+#   "moduleId": 2,
+#   "moduleTitle": "Продвинутые возможности Hibernate"
+# }
 
 # Примечание: модуль может иметь только один квиз (связь 1-1 optional).
 # Для примера используется модуль 2, т.к. модуль 1 уже имеет квиз из демо-данных.
@@ -220,7 +288,12 @@ curl -X POST http://localhost:8080/api/quizzes/2/questions \
 }'
 
 # Ответ: 201 Created
-# { "id": 3 }
+# {
+#   "id": 3,
+#   "text": "Что такое ORM?",
+#   "quizId": 2,
+#   "quizTitle": "Тест по модулю"
+# }
 ```
 
 **Добавление варианта ответа:**
@@ -233,7 +306,13 @@ curl -X POST http://localhost:8080/api/questions/3/options \
 }'
 
 # Ответ: 201 Created
-# { "id": 7 }
+# {
+#   "id": 7,
+#   "text": "Object-Relational Mapping",
+#   "isCorrect": true,
+#   "questionId": 3,
+#   "questionText": "Что такое ORM?"
+# }
 ```
 
 **Прохождение теста:**
@@ -249,7 +328,16 @@ curl -X POST http://localhost:8080/api/quizzes/1/take \
 }'
 
 # Ответ: 201 Created
-# { "id": 1 }
+# {
+#   "id": 1,
+#   "studentId": 2,
+#   "studentName": "Анна Смирнова",
+#   "quizId": 1,
+#   "quizTitle": "Тест по введению в ORM",
+#   "score": 2,
+#   "totalQuestions": 2,
+#   "takenAt": "2025-11-05T08:00:00Z"
+# }
 ```
 
 Балл подсчитывается автоматически: вопрос считается верным, если выбранные варианты точно совпадают с правильными.
@@ -274,6 +362,8 @@ curl -X POST http://localhost:8080/api/quizzes/1/take \
 
 ## Быстрый мануальный прогон
 
+**Примечание**: Все сценарии выполняются на свежей базе данных, заполненной через `DevDataLoader` (после запуска приложения в dev-профиле).
+
 ### Сценарий 1: Создание курса с контентом
 
 ```bash
@@ -281,7 +371,7 @@ curl -X POST http://localhost:8080/api/quizzes/1/take \
 curl -X POST http://localhost:8080/api/courses \
   -H "Content-Type: application/json" \
   -d '{"title":"Новый курс","categoryId":1,"teacherId":1}'
-# Ответ: {"id":2}
+# Ответ: {"id":2,"title":"Новый курс","description":null,"duration":null,"startDate":null,"categoryName":"Программирование","teacherName":"Иван Петров","tagNames":[]}
 ```
 
 ```bash
@@ -289,7 +379,7 @@ curl -X POST http://localhost:8080/api/courses \
 curl -X POST http://localhost:8080/api/courses/2/modules \
   -H "Content-Type: application/json" \
   -d '{"title":"Модуль 1","orderIndex":1}'
-# Ответ: {"id":3}
+# Ответ: {"id":3,"title":"Модуль 1","description":null,"orderIndex":1,"courseId":2,"courseTitle":"Новый курс"}
 ```
 
 ```bash
@@ -297,17 +387,17 @@ curl -X POST http://localhost:8080/api/courses/2/modules \
 curl -X POST http://localhost:8080/api/modules/3/lessons \
   -H "Content-Type: application/json" \
   -d '{"title":"Урок 1","content":"Контент"}'
-# Ответ: {"id":5}
+# Ответ: {"id":5,"title":"Урок 1","content":"Контент","videoUrl":null,"moduleId":3,"moduleTitle":"Модуль 1"}
 ```
 
 ### Сценарий 2: Задание и оценка
 
 ```bash
-# 1. Создать задание
+# 1. Создать задание (используем урок из демо-данных)
 curl -X POST http://localhost:8080/api/lessons/1/assignments \
   -H "Content-Type: application/json" \
   -d '{"title":"Задание 1","maxScore":100}'
-# Ответ: {"id":2}
+# Ответ: {"id":2,"title":"Задание 1","description":null,"maxScore":100,"lessonId":1,"lessonTitle":"Что такое ORM?"}
 ```
 
 ```bash
@@ -315,7 +405,7 @@ curl -X POST http://localhost:8080/api/lessons/1/assignments \
 curl -X POST http://localhost:8080/api/assignments/2/submit \
   -H "Content-Type: application/json" \
   -d '{"studentId":2,"content":"Мое решение"}'
-# Ответ: {"id":1}
+# Ответ: {"id":1,"studentId":2,"studentName":"Анна Смирнова","assignmentId":2,"assignmentTitle":"Задание 1","content":"Мое решение","submittedAt":"2025-11-05T08:00:00Z","score":null,"feedback":null}
 ```
 
 ```bash
@@ -333,7 +423,7 @@ curl -X POST http://localhost:8080/api/submissions/1/grade \
 curl -X POST http://localhost:8080/api/modules/2/quiz \
   -H "Content-Type: application/json" \
   -d '{"title":"Тест","timeLimitSeconds":1800}'
-# Ответ: {"id":2}
+# Ответ: {"id":2,"title":"Тест","timeLimit":1800,"moduleId":2,"moduleTitle":"Продвинутые возможности Hibernate"}
 ```
 
 ```bash
@@ -341,7 +431,7 @@ curl -X POST http://localhost:8080/api/modules/2/quiz \
 curl -X POST http://localhost:8080/api/quizzes/2/questions \
   -H "Content-Type: application/json" \
   -d '{"text":"Что такое LAZY?"}'
-# Ответ: {"id":3}
+# Ответ: {"id":3,"text":"Что такое LAZY?","quizId":2,"quizTitle":"Тест"}
 ```
 
 ```bash
@@ -349,12 +439,12 @@ curl -X POST http://localhost:8080/api/quizzes/2/questions \
 curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Ленивая загрузка","isCorrect":true}'
-# Ответ: {"id":7}
+# Ответ: {"id":7,"text":"Ленивая загрузка","isCorrect":true,"questionId":3,"questionText":"Что такое LAZY?"}
 
 curl -X POST http://localhost:8080/api/questions/3/options \
   -H "Content-Type: application/json" \
   -d '{"text":"Немедленная загрузка","isCorrect":false}'
-# Ответ: {"id":8}
+# Ответ: {"id":8,"text":"Немедленная загрузка","isCorrect":false,"questionId":3,"questionText":"Что такое LAZY?"}
 ```
 
 ```bash
@@ -362,7 +452,7 @@ curl -X POST http://localhost:8080/api/questions/3/options \
 curl -X POST http://localhost:8080/api/quizzes/1/take \
   -H "Content-Type: application/json" \
   -d '{"studentId":2,"answersByQuestion":{"1":[1],"2":[5]}}'
-# Ответ: {"id":1} (score подсчитывается автоматически)
+# Ответ: {"id":1,"studentId":2,"studentName":"Анна Смирнова","quizId":1,"quizTitle":"Тест по введению в ORM","score":2,"totalQuestions":2,"takenAt":"2025-11-05T08:00:00Z"}
 ```
 
 ## CI/CD

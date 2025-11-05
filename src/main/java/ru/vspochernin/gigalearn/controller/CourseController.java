@@ -3,14 +3,15 @@ package ru.vspochernin.gigalearn.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import ru.vspochernin.gigalearn.dto.CourseCreateDto;
-import ru.vspochernin.gigalearn.dto.CourseResponseDto;
-import ru.vspochernin.gigalearn.dto.IdResponseDto;
-import ru.vspochernin.gigalearn.dto.ModuleCreateDto;
+import ru.vspochernin.gigalearn.dto.*;
 import ru.vspochernin.gigalearn.entity.Course;
+import ru.vspochernin.gigalearn.entity.Enrollment;
 import ru.vspochernin.gigalearn.entity.Tag;
+import ru.vspochernin.gigalearn.repository.EnrollmentRepository;
 import ru.vspochernin.gigalearn.repository.TagRepository;
+import ru.vspochernin.gigalearn.repository.UserRepository;
 import ru.vspochernin.gigalearn.service.CourseService;
 import ru.vspochernin.gigalearn.service.EnrollmentService;
 
@@ -26,10 +27,13 @@ public class CourseController {
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
     private final TagRepository tagRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final UserRepository userRepository;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public IdResponseDto createCourse(@Valid @RequestBody CourseCreateDto dto) {
+    @Transactional
+    public CourseResponseDto createCourse(@Valid @RequestBody CourseCreateDto dto) {
         Course course = courseService.createCourse(
                 dto.getTitle(),
                 dto.getDescription(),
@@ -50,7 +54,19 @@ public class CourseController {
             course.getTags().addAll(tags);
         }
 
-        return IdResponseDto.builder().id(course.getId()).build();
+        // Строим полный DTO для ответа
+        return CourseResponseDto.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .duration(course.getDuration())
+                .startDate(course.getStartDate())
+                .categoryName(course.getCategory().getName())
+                .teacherName(course.getTeacher().getName())
+                .tagNames(course.getTags().stream()
+                        .map(Tag::getName)
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     @GetMapping("/{id}")
@@ -73,21 +89,48 @@ public class CourseController {
 
     @PostMapping("/{id}/modules")
     @ResponseStatus(HttpStatus.CREATED)
-    public IdResponseDto addModule(@PathVariable Long id, @Valid @RequestBody ModuleCreateDto dto) {
+    @Transactional
+    public ModuleResponseDto addModule(@PathVariable Long id, @Valid @RequestBody ModuleCreateDto dto) {
         Long moduleId = courseService.addModule(
                 id,
                 dto.getTitle(),
                 dto.getDescription(),
                 dto.getOrderIndex()
         );
-        return IdResponseDto.builder().id(moduleId).build();
+
+        ru.vspochernin.gigalearn.entity.Module module = courseService.getCourseById(id).getModules().stream()
+                .filter(m -> m.getId().equals(moduleId))
+                .findFirst()
+                .orElseThrow();
+
+        return ModuleResponseDto.builder()
+                .id(module.getId())
+                .title(module.getTitle())
+                .description(module.getDescription())
+                .orderIndex(module.getOrderIndex())
+                .courseId(module.getCourse().getId())
+                .courseTitle(module.getCourse().getTitle())
+                .build();
     }
 
     @PostMapping("/{id}/enroll")
     @ResponseStatus(HttpStatus.CREATED)
-    public IdResponseDto enrollStudent(@PathVariable Long id, @RequestParam Long userId) {
+    @Transactional
+    public EnrollmentResponseDto enrollStudent(@PathVariable Long id, @RequestParam Long userId) {
         long enrollmentId = enrollmentService.enrollStudent(id, userId);
-        return IdResponseDto.builder().id(enrollmentId).build();
+
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Enrollment not found"));
+
+        return EnrollmentResponseDto.builder()
+                .id(enrollment.getId())
+                .studentId(enrollment.getUser().getId())
+                .studentName(enrollment.getUser().getName())
+                .courseId(enrollment.getCourse().getId())
+                .courseTitle(enrollment.getCourse().getTitle())
+                .enrollDate(enrollment.getEnrollDate())
+                .status(enrollment.getStatus())
+                .build();
     }
 
     @DeleteMapping("/{id}/enroll")

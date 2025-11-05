@@ -149,7 +149,12 @@ class AssignmentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("Test Assignment"))
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.maxScore").value(100))
+                .andExpect(jsonPath("$.lessonId").value(lessonId))
+                .andExpect(jsonPath("$.lessonTitle").value("Lesson"));
     }
 
     @Test
@@ -189,7 +194,15 @@ class AssignmentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.studentId").value(studentId))
+                .andExpect(jsonPath("$.studentName").value("Student"))
+                .andExpect(jsonPath("$.assignmentId").value(assignment.getId()))
+                .andExpect(jsonPath("$.assignmentTitle").value("Test Assignment"))
+                .andExpect(jsonPath("$.content").value("My solution"))
+                .andExpect(jsonPath("$.submittedAt").isNotEmpty())
+                .andExpect(jsonPath("$.score").isEmpty())
+                .andExpect(jsonPath("$.feedback").isEmpty());
     }
 
     @Test

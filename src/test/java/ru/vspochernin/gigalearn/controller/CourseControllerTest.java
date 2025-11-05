@@ -124,7 +124,13 @@ class CourseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("Test Course"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.categoryName").value("Test Category"))
+                .andExpect(jsonPath("$.teacherName").value("Test Teacher"))
+                .andExpect(jsonPath("$.tagNames").isArray())
+                .andExpect(jsonPath("$.tagNames[0]").value("Test Tag"));
     }
 
     @Test
@@ -202,7 +208,12 @@ class CourseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.title").value("Test Module"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.orderIndex").value(1))
+                .andExpect(jsonPath("$.courseId").value(course.getId()))
+                .andExpect(jsonPath("$.courseTitle").value("Test Course"));
     }
 
     @Test
@@ -231,7 +242,13 @@ class CourseControllerTest {
         mockMvc.perform(post("/api/courses/" + course.getId() + "/enroll")
                         .param("userId", student.getId().toString()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.studentId").value(student.getId()))
+                .andExpect(jsonPath("$.studentName").value("Student"))
+                .andExpect(jsonPath("$.courseId").value(course.getId()))
+                .andExpect(jsonPath("$.courseTitle").value("Test Course"))
+                .andExpect(jsonPath("$.enrollDate").isNotEmpty())
+                .andExpect(jsonPath("$.status").value("Active"));
     }
 
     @Test
