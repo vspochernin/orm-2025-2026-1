@@ -119,11 +119,14 @@ curl http://localhost:8080/api/courses/1
 
 # Ответ: 200 OK
 # {
-#   "id": 1,
-#   "title": "Основы Hibernate и JPA",
-#   ...
-#   "teacherName": "Иван Петров",
-#   "tagNames": ["Java", "ORM"]
+#    "id":1,
+#    "title": "Основы Hibernate и JPA",
+#    "description":"Изучение объектно-реляционного отображения в Java",
+#    "duration":"8 недель",
+#    "startDate":"2025-11-12",
+#    "categoryName":"Программирование",
+#    "teacherName":"Иван Петров",
+#    "tagNames":["Java","ORM"]
 # }
 ```
 
